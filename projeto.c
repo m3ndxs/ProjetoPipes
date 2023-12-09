@@ -112,13 +112,27 @@ void menu()
         switch (opcao)
         {
         case 1:
-            int descritor2,
-                pipe3[2],
-                pipe4[2];
+            printf("\nAbrindo arquivo...\n\n");
 
-            printf("\nAbrindo arquivo...");
+            comunicacaoArquivo();
+            
+            break;
+        case 2:
+            printf("\nSaindo arquivo...");
+            break;
+        default:
+            printf("\nOpção invalida!");
+        }
 
-            if (pipe(pipe3) < 0 || pipe(pipe4) < 0)
+    } while (opcao != 2);
+}
+
+void comunicacaoArquivo(){
+    int descritor2,
+        pipe3[2],
+        pipe4[2];
+
+    if (pipe(pipe3) < 0 || pipe(pipe4) < 0)
             {
                 printf("Erro na chamada PIPE");
                 exit(0);
@@ -153,15 +167,6 @@ void menu()
 
                 exit(0);
             }
-            break;
-        case 2:
-            printf("\nSaindo arquivo...");
-            break;
-        default:
-            printf("\nOpção invalida!");
-        }
-
-    } while (opcao != 2);
 }
 
 mostraArquivo(readfd) int readfd;
@@ -170,10 +175,7 @@ mostraArquivo(readfd) int readfd;
     char arquivo[300];
     read(readfd, arquivo, 300);
 
-    while (1)
-    {
-        printf("%s", &arquivo);
-    }
+    printf("%s", &arquivo);
 }
 
 leArquivo(writefd) int writefd;

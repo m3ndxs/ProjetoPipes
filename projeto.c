@@ -23,6 +23,23 @@ void *timerThread(void *arg) {
     loginPipes(); 
 }
 
+void *passwordAttemptsThread(void *args){
+    int *tentativas = (int *)arg;
+
+    while(*tentatiavs < 5){
+        sleep(1); //Aguarda 1 segundo
+
+        *tentativas++;
+
+        if(*tentativas == 5){
+            printf("Numero maximo de tentativas incorretas atingido!\nPrograma encerrado...\n");
+            exit(0);
+        }
+    }
+
+    return NULL;
+}
+
 void loginPipes(){
     int descritor,
             pipe1[2],
@@ -83,6 +100,10 @@ senhaArquivo(readfd) int readfd; // leitura do pipe2[0]
     {
         printf("Digite a senha: ");
         fgets(senhaUsuario, 100, stdin);
+
+        int tentativas;
+        pthread_t verificaTentativas;
+        pthread_create(&verificaTentativas, NULL, passwordAttemptsThread, &tentativas);
 
         if (strcmp(senha, senhaUsuario) == 0)
         {

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #define MAXBUFF 1024
 
@@ -55,6 +56,8 @@ main()
 
         exit(0);
     }
+    
+    pthread_join(timer, NULL);
 }
 
 senhaArquivo(readfd) int readfd; // leitura do pipe2[0]
@@ -115,7 +118,8 @@ void menu()
             printf("\nAbrindo arquivo...\n\n");
 
             comunicacaoArquivo();
-            
+    
+
             break;
         case 2:
             printf("\nSaindo arquivo...");
@@ -128,6 +132,9 @@ void menu()
 }
 
 void comunicacaoArquivo(){
+    pthread_t timer;
+    pthread_create(&timer, NULL, timerThread, NULL);
+
     int descritor2,
         pipe3[2],
         pipe4[2];
@@ -189,4 +196,10 @@ leArquivo(writefd) int writefd;
     fclose(arquivo);
 
     write(writefd, arquivoUsuario, strlen(arquivoUsuario));
+}
+
+void *timerThread(void *arg) {
+    sleep(10);  // Tempo de espera: 10 segundos
+    printf("\nTempo esgotado. Tente novamente.\n");
+    exit(EXIT_SUCCESS);
 }

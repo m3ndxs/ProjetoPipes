@@ -16,6 +16,13 @@ main()
     return 0;
 }
 
+void *timerThread(void *arg) {
+    sleep(10);  // Tempo de espera: 10 segundos
+    printf("\nTempo esgotado. Tente novamente.\n");
+    system("clear");
+    loginPipes(); 
+}
+
 void loginPipes(){
     int descritor,
             pipe1[2],
@@ -205,11 +212,4 @@ leArquivo(writefd) int writefd;
     fclose(arquivo);
 
     write(writefd, arquivoUsuario, strlen(arquivoUsuario));
-}
-
-void *timerThread(void *arg) {
-    sleep(10);  // Tempo de espera: 10 segundos
-    printf("\nTempo esgotado. Tente novamente.\n");
-    system("clear");
-    loginPipes(); 
 }

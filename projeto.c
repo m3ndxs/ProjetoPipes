@@ -60,13 +60,12 @@ void loginPipes(){
         else
         {
             close(pipe1[1]);
+            close(pipe2[0]);
             close(pipe1[0]);
 
             leSenha(pipe2[1]); // Realiza somente a leitura da senha em um arquivo txt
-            senhaArquivo(pipe2[0]);
-
+            
             close(pipe2[1]);
-            close(pipe2[0]);
 
             exit(0);
         }

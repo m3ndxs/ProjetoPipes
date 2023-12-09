@@ -11,53 +11,57 @@
 
 main()
 {
+    loginPipes();   
+
+    return 0;
+}
+
+void loginPipes(){
     int descritor,
-        pipe1[2],
-        pipe2[2];
+            pipe1[2],
+            pipe2[2];
 
-    if (pipe(pipe1) < 0 || pipe(pipe2) < 0)
-    {
-        printf("Erro na chamada PIPE");
-        exit(0);
-    }
+        if (pipe(pipe1) < 0 || pipe(pipe2) < 0)
+        {
+            printf("Erro na chamada PIPE");
+            exit(0);
+        }
 
-    // Criando o processo filho
-    // id = fork()
-    // if(id > 0 ) -> processo pai
-    // if(id = 0 ) -> processo filho
-    // if(id < 0 ) -> erro na chamada fork
+        // Criando o processo filho
+        // id = fork()
+        // if(id > 0 ) -> processo pai
+        // if(id = 0 ) -> processo filho
+        // if(id < 0 ) -> erro na chamada fork
 
-    if ((descritor = fork()) < 0)
-    {
-        printf("Erro chamada FORK");
-        exit(0);
-    }
-    else if (descritor > 0)
-    {
-        close(pipe1[0]);
-        close(pipe2[1]);
-        close(pipe1[1]);
+        if ((descritor = fork()) < 0)
+        {
+            printf("Erro chamada FORK");
+            exit(0);
+        }
+        else if (descritor > 0)
+        {
+            close(pipe1[0]);
+            close(pipe2[1]);
+            close(pipe1[1]);
 
-        senhaArquivo(pipe2[0]); // faz a Leitura da senha no processo pai
+            senhaArquivo(pipe2[0]); // faz a Leitura da senha no processo pai
 
-        close(pipe2[0]);
+            close(pipe2[0]);
 
-        exit(0);
-    }
-    else
-    {
-        close(pipe1[1]);
-        close(pipe2[0]);
-        close(pipe1[0]);
+            exit(0);
+        }
+        else
+        {
+            close(pipe1[1]);
+            close(pipe2[0]);
+            close(pipe1[0]);
 
-        leSenha(pipe2[1]); // Realiza somente a leitura da senha em um arquivo txt
+            leSenha(pipe2[1]); // Realiza somente a leitura da senha em um arquivo txt
 
-        close(pipe2[1]);
+            close(pipe2[1]);
 
-        exit(0);
-    }
-    
-    pthread_join(timer, NULL);
+            exit(0);
+        }
 }
 
 senhaArquivo(readfd) int readfd; // leitura do pipe2[0]
@@ -119,7 +123,6 @@ void menu()
 
             comunicacaoArquivo();
     
-
             break;
         case 2:
             printf("\nSaindo arquivo...");
@@ -158,6 +161,8 @@ void comunicacaoArquivo(){
 
                 mostraArquivo(pipe4[0]);
 
+                pthread_join(timer, NULL);
+
                 close(pipe4[0]);
 
                 exit(0);
@@ -170,10 +175,14 @@ void comunicacaoArquivo(){
 
                 leArquivo(pipe4[1]);
 
+                pthread_join(timer, NULL);
+
                 close(pipe4[1]);
 
                 exit(0);
             }
+
+    
 }
 
 mostraArquivo(readfd) int readfd;
@@ -201,5 +210,6 @@ leArquivo(writefd) int writefd;
 void *timerThread(void *arg) {
     sleep(10);  // Tempo de espera: 10 segundos
     printf("\nTempo esgotado. Tente novamente.\n");
-    exit(EXIT_SUCCESS);
+    system("clear");
+    loginPipes(); 
 }

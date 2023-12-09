@@ -1,19 +1,21 @@
-#include<stdio.h>
-#include<string.h>
-#include<stdlib.h>
-#include<unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #define MAXBUFF 1024
 
-//pipe[0] -> Leitura
-//pipe[1] -> Escrita
+// pipe[0] -> Leitura
+// pipe[1] -> Escrita
 
-main(){
+main()
+{
     int descritor,
         pipe1[2],
         pipe2[2];
 
-    if(pipe(pipe1)<0 || pipe(pipe2)<0) {
+    if (pipe(pipe1) < 0 || pipe(pipe2) < 0)
+    {
         printf("Erro na chamada PIPE");
         exit(0);
     }
@@ -21,14 +23,16 @@ main(){
     // Criando o processo filho
     // id = fork()
     // if(id > 0 ) -> processo pai
-    // if(id = 0 ) -> processo filho 
-    // if(id > 0 ) -> erro na chamada fork
+    // if(id = 0 ) -> processo filho
+    // if(id < 0 ) -> erro na chamada fork
 
-    if((descritor = fork())<0) {
+    if ((descritor = fork()) < 0)
+    {
         printf("Erro chamada FORK");
         exit(0);
     }
-    else if(descritor > 0) {
+    else if (descritor > 0)
+    {
         close(pipe1[0]);
         close(pipe2[1]);
         close(pipe1[1]);
@@ -39,45 +43,47 @@ main(){
 
         exit(0);
     }
-    else {
+    else
+    {
         close(pipe1[1]);
         close(pipe2[0]);
         close(pipe1[0]);
 
-        leSenha(pipe2[1]);  // Realiza somente a leitura da senha em um arquivo txt
+        leSenha(pipe2[1]); // Realiza somente a leitura da senha em um arquivo txt
 
         close(pipe2[1]);
-        
+
         exit(0);
-    }    
+    }
 }
 
-
-senhaArquivo(readfd)
-int readfd; //leitura do pipe2[0]
+senhaArquivo(readfd) int readfd; // leitura do pipe2[0]
 
 {
     char senha[100];
     read(readfd, senha, 100);
 
     char senhaUsuario[100];
-    
-    do{
+
+    do
+    {
         printf("Digite a senha: ");
         fgets(senhaUsuario, 100, stdin);
 
-        if(strcmp(senha, senhaUsuario) == 0){
+        if (strcmp(senha, senhaUsuario) == 0)
+        {
             printf("\nSenha Correta! ");
+
+            menu();
         }
-        else{
+        else
+        {
             printf("\nSenha incorreta, tente novamente!");
         }
-    }while(1);
-
+    } while (1);
 }
 
-leSenha(writefd)
-int writefd;
+leSenha(writefd) int writefd;
 
 {
     FILE *arquivoSenha = fopen("arquivo.txt", "r");
@@ -90,39 +96,95 @@ int writefd;
     write(writefd, senha, strlen(senha));
 }
 
-void menu() {
+void menu()
+{
     int opcao;
 
-    do{
+    do
+    {
         printf("Seja bem vindo(a)!\n");
-        printf("\n1 - Criar Arquivo");
-        printf("\n2 - Abrir Arquivo");
-        printf("\n3 - Alterar Arquivo");
-        printf("\n4 - Deletar Arquivo");
-        printf("\n5- Sair");
+        printf("\n1 - Abrir Arquivo");
+        printf("\n2 - Sair");
 
         printf("\nEscolha uma opcao: ");
         scanf("%d", &opcao);
 
-        switch(opcao){
-            case 1:
-                printf("\nCriando arquivo...");  
-                break;
-            case 2:
-                printf("\nAbrindo arquivo...");
-                break;
-            case 3:
-                printf("\nAlterando arquivo...");
-                break;
-            case 4:
-                printf("\nDeletando arquivo...");
-                break;
-            case 5:
-                printf("\nVolte sempre...");
-                break;
-            default:
-                printf("\nOpção invalida!");        
+        switch (opcao)
+        {
+        case 1:
+            int descritor2,
+                pipe3[2],
+                pipe4[2];
+
+            printf("\nAbrindo arquivo...");
+
+            if (pipe(pipe3) < 0 || pipe(pipe4) < 0)
+            {
+                printf("Erro na chamada PIPE");
+                exit(0);
+            }
+
+            if ((descritor2 = fork()) < 0)
+            {
+                printf("Erro chamada FORK");
+                exit(0);
+            }
+            else if (descritor2 > 0)
+            {
+                close(pipe3[0]);
+                close(pipe4[1]);
+                close(pipe3[1]);
+
+                mostraArquivo(pipe4[0]);
+
+                close(pipe4[0]);
+
+                exit(0);
+            }
+            else
+            {
+                close(pipe3[1]);
+                close(pipe4[0]);
+                close(pipe3[0]);
+
+                leArquivo(pipe4[1]);
+
+                close(pipe4[1]);
+
+                exit(0);
+            }
+            break;
+        case 2:
+            printf("\nSaindo arquivo...");
+            break;
+        default:
+            printf("\nOpção invalida!");
         }
 
-    }while(opcao != 5);
+    } while (opcao != 2);
+}
+
+mostraArquivo(readfd) int readfd;
+
+{
+    char arquivo[300];
+    read(readfd, arquivo, 300);
+
+    while (1)
+    {
+        printf("%s", &arquivo);
+    }
+}
+
+leArquivo(writefd) int writefd;
+
+{
+    FILE *arquivo = fopen("arquivo.txt", "r");
+
+    char arquivoUsuario[300];
+    fgets(arquivoUsuario, 300, arquivo);
+
+    fclose(arquivo);
+
+    write(writefd, arquivoUsuario, strlen(arquivoUsuario));
 }

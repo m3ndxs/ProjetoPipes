@@ -9,9 +9,12 @@
 // pipe[0] -> Leitura
 // pipe[1] -> Escrita
 
+
+int tentativas = 0;
+
 main()
 {
-    loginPipes();   
+    loginPipes();
 
     return 0;
 }
@@ -20,19 +23,21 @@ void *timerThread(void *arg) {
     sleep(10);  // Tempo de espera: 10 segundos
     printf("\nTempo esgotado. Tente novamente.\n");
     system("clear");
-    loginPipes(); 
+
+    tentativas = 0;
+
+    loginPipes();
 }
 
-void *passwordAttemptsThread(void *args){
-    int *tentativas = (int *)arg;
-
-    while(*tentatiavs < 5){
+void *passwordAttemptsThread(int *args){
+    if(tentativas < 5){
         sleep(1); //Aguarda 1 segundo
 
-        *tentativas++;
-
-        if(*tentativas == 5){
+        if(tentativas == 5){
+            system("clear");
             printf("Numero maximo de tentativas incorretas atingido!\nPrograma encerrado...\n");
+
+            tentativas = 0;
             exit(0);
         }
     }
@@ -81,7 +86,7 @@ void loginPipes(){
             close(pipe1[0]);
 
             leSenha(pipe2[1]); // Realiza somente a leitura da senha em um arquivo txt
-            
+
             close(pipe2[1]);
 
             exit(0);
@@ -96,24 +101,29 @@ senhaArquivo(readfd) int readfd; // leitura do pipe2[0]
 
     char senhaUsuario[100];
 
+
+
     do
     {
         printf("Digite a senha: ");
         fgets(senhaUsuario, 100, stdin);
 
-        int tentativas;
         pthread_t verificaTentativas;
-        pthread_create(&verificaTentativas, NULL, passwordAttemptsThread, &tentativas);
+        pthread_create(&verificaTentativas, NULL, passwordAttemptsThread, tentativas);
 
         if (strcmp(senha, senhaUsuario) == 0)
         {
             printf("\nSenha Correta! ");
 
             menu();
+
+            pthread_t verificaTentativas;
+            pthread_create(&verificaTentativas, NULL, passwordAttemptsThread, tentativas);
         }
         else
         {
-            printf("\nSenha incorreta, tente novamente!");
+            printf("\nSenha incorreta, tente novamente!\n\n");
+            tentativas++;
         }
     } while (1);
 }
@@ -137,6 +147,8 @@ void menu()
 
     do
     {
+        system("clear");
+
         printf("Seja bem vindo(a)!\n");
         printf("\n1 - Abrir Arquivo");
         printf("\n2 - Sair");
@@ -147,16 +159,18 @@ void menu()
         switch (opcao)
         {
         case 1:
-            printf("\nAbrindo arquivo...\n\n");
+            system("clear");
+            printf("Abrindo arquivo...\n\n");
 
             comunicacaoArquivo();
-    
+
             break;
         case 2:
-            printf("\nSaindo arquivo...");
+            system("clear");
+            printf("Saindo arquivo...");
             break;
         default:
-            printf("\nOpção invalida!");
+            printf("Opção invalida!\n");
         }
 
     } while (opcao != 2);
@@ -210,7 +224,7 @@ void comunicacaoArquivo(){
                 exit(0);
             }
 
-    
+
 }
 
 mostraArquivo(readfd) int readfd;
@@ -225,7 +239,7 @@ mostraArquivo(readfd) int readfd;
 leArquivo(writefd) int writefd;
 
 {
-    FILE *arquivo = fopen("arquivo.txt", "r");
+    FILE *arquivo = fopen(".infos.txt", "r");
 
     char arquivoUsuario[300];
     fgets(arquivoUsuario, 300, arquivo);

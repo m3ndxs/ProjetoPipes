@@ -4,13 +4,11 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#define MAXBUFF 1024
-
 // pipe[0] -> Leitura
 // pipe[1] -> Escrita
 
 
-int tentativas = 0;
+int attempts = 0;
 
 main()
 {
@@ -21,23 +19,23 @@ main()
 
 void *timerThread(void *arg) {
     sleep(10);  // Tempo de espera: 10 segundos
-    printf("\nTempo esgotado. Tente novamente.\n");
+    printf("\nTime ended. Try again.\n");
     system("clear");
 
-    tentativas = 0;
+    attempts = 0;
 
     loginPipes();
 }
 
 void *passwordAttemptsThread(int *args){
-    if(tentativas < 5){
+    if(attempts < 5){
         sleep(1); //Aguarda 1 segundo
 
-        if(tentativas == 5){
+        if(attempts == 5){
             system("clear");
-            printf("Numero maximo de tentativas incorretas atingido!\nPrograma encerrado...\n");
+            printf("Maximum number of attempts reached!!\nClosing program...\n");
 
-            tentativas = 0;
+            attempts = 0;
             exit(0);
         }
     }
@@ -46,13 +44,12 @@ void *passwordAttemptsThread(int *args){
 }
 
 void loginPipes(){
-    int descritor,
-            pipe1[2],
-            pipe2[2];
+    int descriptor,
+            pipe1[2];
 
-        if (pipe(pipe1) < 0 || pipe(pipe2) < 0)
+        if (pipe(pipe1) < 0)
         {
-            printf("Erro na chamada PIPE");
+            printf("Error PIPE");
             exit(0);
         }
 
@@ -62,164 +59,153 @@ void loginPipes(){
         // if(id = 0 ) -> processo filho
         // if(id < 0 ) -> erro na chamada fork
 
-        if ((descritor = fork()) < 0)
+        if ((descriptor = fork()) < 0)
         {
-            printf("Erro chamada FORK");
+            printf("Error FORK");
             exit(0);
         }
-        else if (descritor > 0)
+        else if (descriptor > 0)
         {
-            close(pipe1[0]);
-            close(pipe2[1]);
             close(pipe1[1]);
 
-            senhaArquivo(pipe2[0]); // faz a Leitura da senha no processo pai
+            passwordFile(pipe1[0]); // faz a Leitura da password no processo pai
 
-            close(pipe2[0]);
+            close(pipe1[0]);
 
             exit(0);
         }
         else
         {
-            close(pipe1[1]);
-            close(pipe2[0]);
             close(pipe1[0]);
 
-            leSenha(pipe2[1]); // Realiza somente a leitura da senha em um arquivo txt
+            readPassword(pipe1[1]); // Realiza somente a leitura da password em um file txt
 
-            close(pipe2[1]);
+            close(pipe1[1]);
 
             exit(0);
         }
 }
 
-senhaArquivo(readfd) int readfd; // leitura do pipe2[0]
+passwordFile(readfd) int readfd; // leitura do pipe2[0]
 
 {
-    char senha[100];
-    read(readfd, senha, 100);
+    char password[100];
+    read(readfd, password, 100);
 
-    char senhaUsuario[100];
-
-
+    char userPassword[100];
 
     do
     {
-        printf("Digite a senha: ");
-        fgets(senhaUsuario, 100, stdin);
+        printf("Password: ");
+        fgets(userPassword, 100, stdin);
 
-        pthread_t verificaTentativas;
-        pthread_create(&verificaTentativas, NULL, passwordAttemptsThread, tentativas);
+        pthread_t checkAttempts;
+        pthread_create(&checkAttempts, NULL, passwordAttemptsThread, attempts);
 
-        if (strcmp(senha, senhaUsuario) == 0)
+        if (strcmp(password, userPassword) == 0)
         {
-            printf("\nSenha Correta! ");
+            printf("\nCorrect password!\n\n ");
 
             menu();
 
-            pthread_t verificaTentativas;
-            pthread_create(&verificaTentativas, NULL, passwordAttemptsThread, tentativas);
+            pthread_t checkAttempts;
+            pthread_create(&checkAttempts, NULL, passwordAttemptsThread, attempts);
         }
         else
         {
-            printf("\nSenha incorreta, tente novamente!\n\n");
-            tentativas++;
+            printf("\nWrong password. Try again! \n\n");
+            attempts++;
         }
     } while (1);
 }
 
-leSenha(writefd) int writefd;
+readPassword(writefd) int writefd;
 
 {
-    FILE *arquivoSenha = fopen("arquivo.txt", "r");
+    FILE *passwordFile = fopen("arquivo.txt", "r");
 
-    char senha[100];
-    fgets(senha, 100, arquivoSenha);
+    char password[100];
+    fgets(password, 100, passwordFile);
 
-    fclose(arquivoSenha);
+    fclose(passwordFile);
 
-    write(writefd, senha, strlen(senha));
+    write(writefd, password, strlen(password));
 }
 
 void menu()
 {
-    int opcao;
+    int option;
 
     do
     {
         system("clear");
 
-        printf("Seja bem vindo(a)!\n");
-        printf("\n1 - Abrir Arquivo");
-        printf("\n2 - Sair");
+        printf("Welcome!\n");
+        printf("\n1 - Open file");
+        printf("\n2 - Logoff");
 
-        printf("\nEscolha uma opcao: ");
-        scanf("%d", &opcao);
+        printf("\nChoose one option: ");
+        scanf("%d", &option);
 
-        switch (opcao)
+        switch (option)
         {
         case 1:
             system("clear");
-            printf("Abrindo arquivo...\n\n");
+            printf("Opening file...\n\n");
 
-            comunicacaoArquivo();
+            comunicationFile();
 
             break;
         case 2:
             system("clear");
-            printf("Saindo arquivo...");
+            printf("Leaving file...");
             break;
         default:
-            printf("Opção invalida!\n");
+            printf("Invalid option!\n");
         }
 
-    } while (opcao != 2);
+    } while (option != 2);
 }
 
-void comunicacaoArquivo(){
+void comunicationFile(){
     pthread_t timer;
     pthread_create(&timer, NULL, timerThread, NULL);
 
-    int descritor2,
-        pipe3[2],
-        pipe4[2];
+    int descriptor2,
+        pipe2[2];
 
-    if (pipe(pipe3) < 0 || pipe(pipe4) < 0)
+    if (pipe(pipe2) < 0)
             {
-                printf("Erro na chamada PIPE");
+                printf("Error PIPE");
                 exit(0);
             }
 
-            if ((descritor2 = fork()) < 0)
+            if ((descriptor2 = fork()) < 0)
             {
-                printf("Erro chamada FORK");
+                printf("Error FORK");
                 exit(0);
             }
-            else if (descritor2 > 0)
+            else if (descriptor2 > 0)
             {
-                close(pipe3[0]);
-                close(pipe4[1]);
-                close(pipe3[1]);
+                close(pipe2[1]);
 
-                mostraArquivo(pipe4[0]);
+                showFile(pipe2[0]);
 
                 pthread_join(timer, NULL);
 
-                close(pipe4[0]);
+                close(pipe2[0]);
 
                 exit(0);
             }
             else
             {
-                close(pipe3[1]);
-                close(pipe4[0]);
-                close(pipe3[0]);
+                close(pipe2[0]);
 
-                leArquivo(pipe4[1]);
+                readFile(pipe2[1]);
 
                 pthread_join(timer, NULL);
 
-                close(pipe4[1]);
+                close(pipe2[1]);
 
                 exit(0);
             }
@@ -227,24 +213,23 @@ void comunicacaoArquivo(){
 
 }
 
-mostraArquivo(readfd) int readfd;
+showFile(readfd) int readfd;
 
 {
-    char arquivo[300];
-    read(readfd, arquivo, 300);
+    char file[300];
+    read(readfd, file, 300);
 
-    printf("%s", &arquivo);
+    printf("%s", &file);
 }
 
-leArquivo(writefd) int writefd;
-
+readFile(writefd) int writefd;
 {
-    FILE *arquivo = fopen(".infos.txt", "r");
+    FILE *file = fopen(".infos.txt", "r");
 
-    char arquivoUsuario[300];
-    fgets(arquivoUsuario, 300, arquivo);
+    char userFile[300];
+    fgets(userFile, 300, file);
 
-    fclose(arquivo);
+    fclose(file);
 
-    write(writefd, arquivoUsuario, strlen(arquivoUsuario));
+    write(writefd, userFile, strlen(userFile));
 }

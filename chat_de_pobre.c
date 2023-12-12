@@ -65,12 +65,12 @@ int readfd, // leitura do pipe2[0]
 	char buff[MAXBUFF];
       while(1)	
        {
-	printf(" \n Client->");
-	gets(buff);
-	write(writefd, buff, 10);
-	 
-	read(readfd,buff,10);
-	printf(" \n Client <- %s",buff);
+			printf(" \n Client->");
+			gets(buff);
+			write(writefd, buff, 10);
+			
+			read(readfd,buff,10);
+			printf(" \n Client <- %s",buff);
 
        }
 
@@ -94,11 +94,11 @@ int readfd, // leitura do pipe1[0]
 	while(1)	
           {
 	        read(readfd,buff,10);
-		printf(" \n Server<- %s",buff);		
-                
-                printf(" \n Server->");
-		gets(buff);
-		write(writefd, buff, 10);
+			printf(" \n Server<- %s",buff);		
+					
+					printf(" \n Server->");
+			gets(buff);
+			write(writefd, buff, 10);
 	 
 		
 

@@ -52,6 +52,7 @@ void menuLogin(){
     int opcao;
 
     do {
+        system("clear");
         printf("\n------------ Gerenciamento de arquivos --------------\n");
         printf("\n1 - Cadastrar");
         printf("\n2 - Login");
@@ -61,24 +62,27 @@ void menuLogin(){
 
         switch (opcao) {
         case 1:
+            system("clear");
+
             cadastraUsuario();
             break;
 
         case 2:
+            system("clear");
+
             login();
             break;
 
         case 3:
             printf("Saindo do programa...");
             break;
-
+            exit(0);
         default:
             printf("Opcao inavalida, tente novamente!");
             break;
         }
     } while (opcao != 3);
 
-   return 0;
 }
 
 void cadastraUsuario() {
@@ -148,7 +152,7 @@ void salvaCadastro(int readfd, int writefd) {
     read(readfd, buffer, sizeof(buffer));
     printf("\nInformacao recebida -> %s\n", buffer);
 
-    FILE *arquivoUsuarios = fopen("usuarios.txt", "a");
+    FILE *arquivoUsuarios = fopen(".usuarios.txt", "a");
 
     if (arquivoUsuarios == NULL) {
         perror("Erro ao abrir o arquivo de usuarios");
@@ -203,9 +207,9 @@ void realizaLogin(int readfd, int writefd){
     char buffer[50];
 
     printf("\nUsuario: ");
-    scanf("%s", &usuario);
+    scanf("%s", usuario);
     printf("\nSenha: ");
-    scanf("%s", &senha);
+    scanf("%s", senha);
 
     snprintf(infoLogin, sizeof(infoLogin), "%s %s", usuario, senha);
 
@@ -230,10 +234,9 @@ void leLogin(int readfd, int writefd){
 
     sleep(3);
 
-    FILE *arquivoUsuarios = fopen("usuarios.txt", "r");
+    FILE *arquivoUsuarios = fopen(".usuarios.txt", "r");
     if(arquivoUsuarios == NULL){
         perror("\n\nArquivo nao encontrado");
-        return NULL;
     }
 
     infoLogin[strcspn(infoLogin, "\n")] = '\0';
@@ -258,11 +261,8 @@ void leLogin(int readfd, int writefd){
         char resposta[] = "\nLogin falhou...\nTente novamente!\n\n";
 
         write(writefd, resposta, sizeof(resposta));
-
-        return 0;
     }
 
-    return 0;
 }
 
 void menuArquivo(){
@@ -275,7 +275,7 @@ void menuArquivo(){
         printf("Bem vindo!\n");
         printf("\n1 - Abrindo arquivo");
         printf("\n2 - Voltar a tela de login");
-        printf("\n2 - Fechar programa");
+        printf("\n3 - Fechar programa");
 
         printf("\nEscolha uma opcao: ");
         scanf("%d", &opcao);
@@ -291,10 +291,6 @@ void menuArquivo(){
             break;
         case 2:
             system("clear");
-            printf("Voltando a tela inicial...");
-
-            sleep(4);
-
             menuLogin();
 
             break;
@@ -303,8 +299,7 @@ void menuArquivo(){
             system("clear");
             printf("Saindo...");
 
-            menuLogin();
-
+            exit(0);
             break;
         default:
             printf("Opcao invalida!\n");
@@ -360,14 +355,15 @@ void exibeArquivo(int readfd, int writefd){
     write(writefd, "Buscando arquivo na pasta...", sizeof("Buscando arquivo na pasta..."));
 
     read(readfd, file, 300);
-    printf("%s", &file);
+    printf("%s", file);
 }
 
 void leArquivo(int readfd, int writefd){
     char buff[50];
-    FILE *file = fopen("infos.txt", "r");
+    FILE *file = fopen(".infos.txt", "r");
 
     read(readfd, buff, sizeof(buff));
+    printf("%s", buff);
 
     char userFile[300];
     fgets(userFile, 300, file);

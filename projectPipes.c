@@ -193,13 +193,15 @@ void realizaLogin(int readfd, int writefd){
 void leLogin(int readfd, int writefd){
     struct Usuario usuarioAtual;
     char infoLogin[50];
+    char usuario[MAX_USERNAME_LEN];
+    char senha[MAX_PASSWORD_LEN];
     int loginFeito = 0;
     
     read(readfd, infoLogin, sizeof(infoLogin));
     printf("\nConferindo as informações recebidas...");
     printf("\n%s", infoLogin);
 
-    sleep(5);
+    sleep(3);
 
     FILE *arquivoUsuarios = fopen("usuarios.txt", "r");
     if(arquivoUsuarios == NULL){
@@ -207,25 +209,29 @@ void leLogin(int readfd, int writefd){
         return NULL;
     }
 
-    while(fscanf(arquivoUsuarios, "%s %s", usuarioAtual.nomeUsuario, usuarioAtual.senha)){
-        if(strcmp(usuarioAtual.nomeUsuario, infoLogin) == 0){
-            if(strcmp(usuarioAtual.senha, infoLogin + strlen(usuarioAtual.nomeUsuario) + 1) == 0){
-                loginFeito = 1;
+    infoLogin[strcspn(infoLogin, "\n")] = '\0';
 
-                break;
-            }
+    while (fscanf(arquivoUsuarios, "%s %s", usuarioAtual.nomeUsuario, usuarioAtual.senha) == 2) {
+
+        strncpy(usuario, usuarioAtual.nomeUsuario, MAX_USERNAME_LEN);
+        strncpy(senha, usuarioAtual.senha, MAX_PASSWORD_LEN);
+
+        if (strcmp(usuarioAtual.nomeUsuario, usuario) == 0 && strcmp(usuarioAtual.senha, senha) == 0) {
+            loginFeito = 1;
+            break;
         }
     }
+    
 
     fclose(arquivoUsuarios);
 
-    if(loginFeito){
-        char resposta[] = "\nLogin realizado com sucesso!";
+    if(loginFeito == 1){
+        char resposta[] = "\nLogin realizado com sucesso!\n";
 
         write(writefd, resposta, sizeof(resposta));
     }
     else{
-        char resposta[] = "\nLogin falhou...";
+        char resposta[] = "\nLogin falhou...\n";
 
         write(writefd, resposta, sizeof(resposta));
     }

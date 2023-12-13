@@ -19,12 +19,25 @@ void login();
 void realizaLogin(int readfd, int writefd);
 void leLogin(int readfd, int writefd);
 
+//funcoes menu
+void menuArquivo();
+void menuLogin();
+
+//funcoes para ler o arquivo
+void comunicacaoArquivo();
+void exibeArquivo(int readfd, int writefd);
+void leArquivo(int readfd, int writefd);
+
 struct Usuario {
     char nomeUsuario[MAX_USERNAME_LEN];
     char senha[MAX_PASSWORD_LEN];
 };
 
 int main() {
+    
+}
+
+void menuLogin(){
     int opcao;
 
     do {
@@ -49,6 +62,7 @@ int main() {
             break;
 
         default:
+            printf("Opcao inavalida, tente novamente!");
             break;
         }
     } while (opcao != 3);
@@ -213,8 +227,6 @@ void leLogin(int readfd, int writefd){
 
     sscanf(infoLogin, "%s %s", usuario, senha);
 
-    printf("\n\n\nusuario: %s, senha: %s", usuario, senha);
-
     while(fscanf(arquivoUsuarios, "%s %s", usuarioAtual.nomeUsuario, usuarioAtual.senha) == 2){
         if (strcmp(usuarioAtual.nomeUsuario, usuario) == 0 && strcmp(usuarioAtual.senha, senha) == 0) {
             loginFeito = 1;
@@ -222,21 +234,127 @@ void leLogin(int readfd, int writefd){
         }
     }
 
-        
-
-
     fclose(arquivoUsuarios);
 
     if(loginFeito == 1){
-        char resposta[] = "\nLogin realizado com sucesso!\n";
+        char resposta[] = "\nLogin realizado com sucesso!\n\n";
 
         write(writefd, resposta, sizeof(resposta));
+
+        menu();
     }
     else{
-        char resposta[] = "\nLogin falhou...\n";
+        char resposta[] = "\nLogin falhou...\nTente novamente!\n\n";
 
         write(writefd, resposta, sizeof(resposta));
     }
 
     return 0;
+}
+
+void menuArquivo(){
+    int opcao;
+
+    do
+    {
+        system("clear");
+
+        printf("Bem vindo!\n");
+        printf("\n1 - Abrindo arquivo");
+        printf("\n2 - Voltar a tela de login");
+        printf("\n2 - Fechar programa");
+
+        printf("\nEscolha uma opcao: ");
+        scanf("%d", &option);
+
+        switch (option)
+        {
+        case 1:
+            system("clear");
+            printf("Abrindo arquivo...\n\n");
+
+            sleep(5);
+
+            comunicacaoArquivo();
+
+            break;
+        case 2:
+            system("clear");
+            printf("Voltando a tela inicial...");
+
+            sleep(4);
+
+            menuLogin();
+
+            break;
+
+        case 2:
+            system("clear");
+            printf("Saindo...");
+
+            menuLogin();
+
+            break;
+        default:
+            printf("Opcao invalida!\n");
+        }
+
+    } while (opcao != 3);
+}
+
+void comunicacaoArquivo(){
+    int descritor,
+        pipe1[2],
+        pipe2[2];
+
+    if (pipe(pipe1) < 0 || pipe(pipe2) < 0) {
+        printf("Erro na chamada PIPE");
+        exit(0);
+    }
+
+    if ((descritor = fork()) < 0) {
+        printf("Erro na chamada FORK");
+        exit(0);
+    } else if (descritor > 0) {
+        close(pipe1[0]);
+        close(pipe2[1]);
+
+        exibeArquivo(pipe2[0], pipe1[1]);
+
+        close(pipe1[1]);
+        close(pipe2[0]);
+    } else {
+        close(pipe1[1]);
+        close(pipe2[0]);
+
+        leArquivo(pipe1[0], pipe2[1]);
+
+        close(pipe1[0]);
+        close(pipe2[1]);
+
+        exit(0);
+    }
+    
+}
+
+void exibeArquivo(int readfd, int writefd);{
+    char file[300];
+    write(writefd, "Buscando arquivo na pasta...", sizeof("Buscando arquivo na pasta..."));
+
+    read(readfd, file, 300);
+    printf("%s", &file);
+}
+
+void leArquivo(int readfd, int writefd){
+    char buff[50];
+    FILE *file = fopen(".infos.txt", "r");
+
+    read(readfd, buff, sizeof(buff));
+
+    char userFile[300];
+    fgets(userFile, 300, file);
+
+    fclose(file);
+
+    write(writefd, userFile, strlen(userFile));
 }

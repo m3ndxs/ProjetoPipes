@@ -28,13 +28,24 @@ void comunicacaoArquivo();
 void exibeArquivo(int readfd, int writefd);
 void leArquivo(int readfd, int writefd);
 
+//Thread para contar o tempo
+void *timerThread(void *args);
+
 struct Usuario {
     char nomeUsuario[MAX_USERNAME_LEN];
     char senha[MAX_PASSWORD_LEN];
 };
 
 int main() {
-    
+    menuLogin();
+}
+
+void *timerThread(void *args) {
+    sleep(10);  // Tempo de espera: 10 segundos
+    printf("\nTime ended. Try again.\n");
+    system("clear");
+
+    menuLogin();
 }
 
 void menuLogin(){
@@ -202,6 +213,8 @@ void realizaLogin(int readfd, int writefd){
 
     read(readfd, buffer, sizeof(buffer));
     printf("%s", buffer);
+
+    menuArquivo();
 }
 
 void leLogin(int readfd, int writefd){
@@ -240,13 +253,13 @@ void leLogin(int readfd, int writefd){
         char resposta[] = "\nLogin realizado com sucesso!\n\n";
 
         write(writefd, resposta, sizeof(resposta));
-
-        menu();
     }
     else{
         char resposta[] = "\nLogin falhou...\nTente novamente!\n\n";
 
         write(writefd, resposta, sizeof(resposta));
+
+        return 0;
     }
 
     return 0;
@@ -265,15 +278,13 @@ void menuArquivo(){
         printf("\n2 - Fechar programa");
 
         printf("\nEscolha uma opcao: ");
-        scanf("%d", &option);
+        scanf("%d", &opcao);
 
-        switch (option)
+        switch (opcao)
         {
         case 1:
             system("clear");
             printf("Abrindo arquivo...\n\n");
-
-            sleep(5);
 
             comunicacaoArquivo();
 
@@ -288,7 +299,7 @@ void menuArquivo(){
 
             break;
 
-        case 2:
+        case 3:
             system("clear");
             printf("Saindo...");
 
@@ -303,6 +314,9 @@ void menuArquivo(){
 }
 
 void comunicacaoArquivo(){
+    pthread_t timer;
+    pthread_create(&timer, NULL, timerThread, NULL);
+
     int descritor,
         pipe1[2],
         pipe2[2];
@@ -321,8 +335,12 @@ void comunicacaoArquivo(){
 
         exibeArquivo(pipe2[0], pipe1[1]);
 
+        pthread_join(timer, NULL);
+
         close(pipe1[1]);
         close(pipe2[0]);
+
+        exit(0);
     } else {
         close(pipe1[1]);
         close(pipe2[0]);
@@ -337,7 +355,7 @@ void comunicacaoArquivo(){
     
 }
 
-void exibeArquivo(int readfd, int writefd);{
+void exibeArquivo(int readfd, int writefd){
     char file[300];
     write(writefd, "Buscando arquivo na pasta...", sizeof("Buscando arquivo na pasta..."));
 
@@ -347,7 +365,7 @@ void exibeArquivo(int readfd, int writefd);{
 
 void leArquivo(int readfd, int writefd){
     char buff[50];
-    FILE *file = fopen(".infos.txt", "r");
+    FILE *file = fopen("infos.txt", "r");
 
     read(readfd, buff, sizeof(buff));
 

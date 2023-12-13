@@ -211,17 +211,19 @@ void leLogin(int readfd, int writefd){
 
     infoLogin[strcspn(infoLogin, "\n")] = '\0';
 
-    while (fscanf(arquivoUsuarios, "%s %s", usuarioAtual.nomeUsuario, usuarioAtual.senha) == 2) {
+    sscanf(infoLogin, "%s %s", usuario, senha);
 
-        strncpy(usuario, usuarioAtual.nomeUsuario, MAX_USERNAME_LEN);
-        strncpy(senha, usuarioAtual.senha, MAX_PASSWORD_LEN);
+    printf("\n\n\nusuario: %s, senha: %s", usuario, senha);
 
+    while(fscanf(arquivoUsuarios, "%s %s", usuarioAtual.nomeUsuario, usuarioAtual.senha) == 2){
         if (strcmp(usuarioAtual.nomeUsuario, usuario) == 0 && strcmp(usuarioAtual.senha, senha) == 0) {
             loginFeito = 1;
             break;
         }
     }
-    
+
+        
+
 
     fclose(arquivoUsuarios);
 

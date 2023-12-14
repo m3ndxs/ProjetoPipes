@@ -1,3 +1,14 @@
+/* 
+Grupo: Leonardo Vilas Boas Mendes e Vinicius Machioni
+
+
+Informações: O projeto funciona apenas em sistemas linux, e para o programa funcionar em
+sua totalidade, é necessário criar dois arquivos:
+ - usuarios.txt: cat > usuários.txt (Não é necessário colocar informações neste arquivo.)
+   .infos.txt(arquivo oculto): cat > .infos.txt (Necessário colocar informações neste arquivo.)
+
+
+*/
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -5,26 +16,26 @@
 #include <pthread.h>
 #include <termios.h>
 
+
 #define MAX_USERNAME_LEN 20
 #define MAX_PASSWORD_LEN 10
 
 // Declaração de funções
-
-// Funcoes para cadastro do usuario
+// Protótipos das funções para cadastro do usuário
 void cadastraUsuario();
 void cadastro(int readfd, int writefd);
 void salvaCadastro(int readfd, int writefd);
 
-//funcoes login
+// protótipos das funções de login
 void login();
 void realizaLogin(int readfd, int writefd);
 void leLogin(int readfd, int writefd);
 
-//funcoes menu
+//protótipos das funções menu
 void menuArquivo();
 void menuLogin();
 
-//funcoes para ler o arquivo
+//protótipos das funções para ler o arquivo
 void comunicacaoArquivo();
 void exibeArquivo(int readfd, int writefd);
 void leArquivo(int readfd, int writefd);
@@ -32,27 +43,33 @@ void leArquivo(int readfd, int writefd);
 //Thread para contar o tempo
 void *timerThread(void *args);
 
-//Funcoes para ocultar e dexar visivel a senha
+//protótipos das funções para ocultar e deixar a senha visível
 void disableEcho();
 void enableEcho();
 
+//Struct para definir o formato das informações do usuário
 struct Usuario {
     char nomeUsuario[MAX_USERNAME_LEN];
     char senha[MAX_PASSWORD_LEN];
 };
 
+//Função main que inicia todo o processo do programa
 int main() {
     menuLogin();
 }
 
+
+//Função para fixar um tempo de acesso para o usuário no arquivo oculto
 void *timerThread(void *args) {
     sleep(10);  // Tempo de espera: 10 segundos
     printf("\nTime ended. Try again.\n");
     system("clear");
 
+
     menuLogin();
 }
 
+//oculta a senha que estava visível
 void disableEcho() {
     struct termios term;
     tcgetattr(STDIN_FILENO, &term);
@@ -60,6 +77,7 @@ void disableEcho() {
     tcsetattr(STDIN_FILENO, TCSANOW, &term);
 }
 
+//exibe a senha que estava oculta
 void enableEcho() {
     struct termios term;
     tcgetattr(STDIN_FILENO, &term);
@@ -67,6 +85,7 @@ void enableEcho() {
     tcsetattr(STDIN_FILENO, TCSANOW, &term);
 }
 
+//Menu inicial que é exibido para o usuário ao executar o programa
 void menuLogin(){
     int opcao;
 
@@ -83,15 +102,12 @@ void menuLogin(){
         case 1:
             cadastraUsuario();
             break;
-
         case 2:
             login();
             break;
-
         case 3:
             printf("Saindo do programa...");
             break;
-
         default:
             printf("Opcao inavalida, tente novamente!");
             break;
@@ -135,13 +151,14 @@ void cadastraUsuario() {
     }
 }
 
+
+//Função que irá realizar o cadastro do usuário no programa
 void cadastro(int readfd, int writefd) {
     struct Usuario novoUsuario;
-
     char confirmacaoSenha[MAX_PASSWORD_LEN];
     char buffer[200];
     char buff[200];
-    
+   
     do{
         system("clear");
         printf("\nInsira seu nome de usuario: ");
@@ -157,13 +174,14 @@ void cadastro(int readfd, int writefd) {
 
         enableEcho();
 
+
         if (strcmp(novoUsuario.senha, confirmacaoSenha) != 0) {
-            printf("Erro: As senhas nao sao iguais. Tente Novamente!\n");
+            printf("\nErro: As senhas nao sao iguais. Tente Novamente!\n");
 
             sleep(3);
         }
     }while(strcmp(novoUsuario.senha, confirmacaoSenha) != 0);
-    
+   
     snprintf(buffer, sizeof(buffer), "%s %s", novoUsuario.nomeUsuario, novoUsuario.senha);
 
     write(writefd, buffer, sizeof(buffer));
@@ -172,6 +190,7 @@ void cadastro(int readfd, int writefd) {
     printf("\n%s", buff);
 }
 
+//Função que irá salvar as informações de cadastro do usuário no arquivo
 void salvaCadastro(int readfd, int writefd) {
     char buffer[200];
 
@@ -225,6 +244,8 @@ void login(){
     }
 }
 
+
+//Função que irá pegar as informações do usuário para realizar o login
 void realizaLogin(int readfd, int writefd){
     char usuario[MAX_USERNAME_LEN];
     char senha[MAX_PASSWORD_LEN];
@@ -260,6 +281,9 @@ void realizaLogin(int readfd, int writefd){
     }
 }
 
+
+//Função que irá fazer a comparação das informações fornecidas pelo usuário
+//com as que estão registradas.
 void leLogin(int readfd, int writefd){
     struct Usuario usuarioAtual;
     char infoLogin[50];
@@ -267,7 +291,7 @@ void leLogin(int readfd, int writefd){
     char senha[MAX_PASSWORD_LEN];
     char linha[200];
     int loginFeito = 0;
-    
+   
     read(readfd, infoLogin, sizeof(infoLogin));
     printf("\nConferindo as informações recebidas...");
     fflush(stdout);
@@ -284,9 +308,9 @@ void leLogin(int readfd, int writefd){
 
     sscanf(infoLogin, "%s %s", usuario, senha);
 
-
     while (fgets(linha, sizeof(linha), arquivoUsuarios) != NULL) {
         sscanf(linha, "%s %s", usuarioAtual.nomeUsuario, usuarioAtual.senha);
+
 
         if (strcmp(usuarioAtual.nomeUsuario, usuario) == 0 && strncmp(usuarioAtual.senha, senha, sizeof(usuarioAtual.senha)) == 0) {
             char resposta[] = "\nLogin realizado com sucesso!\n\n";
@@ -306,6 +330,8 @@ void leLogin(int readfd, int writefd){
     return;
 }
 
+
+//Menu que será exibido após o usuário realizar o login com sucesso
 void menuArquivo(){
     int opcao;
 
@@ -328,7 +354,6 @@ void menuArquivo(){
             printf("Abrindo arquivo...\n\n");
 
             comunicacaoArquivo();
-
             break;
         case 2:
             system("clear");
@@ -337,19 +362,17 @@ void menuArquivo(){
             sleep(4);
 
             menuLogin();
-
             break;
-
         case 3:
             system("clear");
             printf("Saindo...");
 
             exit(0);
-
             break;
         default:
             printf("Opcao invalida!\n");
         }
+
 
     } while (opcao != 3);
 }
@@ -366,7 +389,6 @@ void comunicacaoArquivo(){
         printf("Erro na chamada PIPE");
         exit(0);
     }
-
     if ((descritor = fork()) < 0) {
         printf("Erro na chamada FORK");
         exit(0);
@@ -393,20 +415,22 @@ void comunicacaoArquivo(){
 
         exit(0);
     }
-    
+   
 }
 
+//Função que exibirá para o usuário o arquivo oculto após ele selecionar a opção no menu
 void exibeArquivo(int readfd, int writefd){
     char file[300];
     write(writefd, "Buscando arquivo na pasta...", sizeof("Buscando arquivo na pasta..."));
 
     read(readfd, file, 300);
-    printf("%s", file);
+    printf("\n%s", file);
 }
 
+//Função que irá coletar as informações do arquivo oculto previamente criado
 void leArquivo(int readfd, int writefd){
     char buff[50];
-    FILE *file = fopen("infos.txt", "r");
+    FILE *file = fopen(".infos.txt", "r");
 
     if (file == NULL) {
         perror("Erro ao abrir o arquivo infos.txt");
@@ -416,7 +440,7 @@ void leArquivo(int readfd, int writefd){
     }
 
     read(readfd, buff, sizeof(buff));
-    printf("\n%s", buff);
+    printf("\n%s\n\n", buff);
     fflush(stdout);
 
     char userFile[300];

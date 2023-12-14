@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <termios.h>
 
 #define MAX_USERNAME_LEN 20
 #define MAX_PASSWORD_LEN 10
@@ -31,6 +32,10 @@ void leArquivo(int readfd, int writefd);
 //Thread para contar o tempo
 void *timerThread(void *args);
 
+//Funcoes para ocultar e dexar visivel a senha
+void disableEcho();
+void enableEcho();
+
 struct Usuario {
     char nomeUsuario[MAX_USERNAME_LEN];
     char senha[MAX_PASSWORD_LEN];
@@ -48,6 +53,20 @@ void *timerThread(void *args) {
     menuLogin();
 }
 
+void disableEcho() {
+    struct termios term;
+    tcgetattr(STDIN_FILENO, &term);
+    term.c_lflag &= ~ECHO;
+    tcsetattr(STDIN_FILENO, TCSANOW, &term);
+}
+
+void enableEcho() {
+    struct termios term;
+    tcgetattr(STDIN_FILENO, &term);
+    term.c_lflag |= ECHO;
+    tcsetattr(STDIN_FILENO, TCSANOW, &term);
+}
+
 void menuLogin(){
     int opcao;
 
@@ -62,27 +81,24 @@ void menuLogin(){
 
         switch (opcao) {
         case 1:
-            system("clear");
-
             cadastraUsuario();
             break;
 
         case 2:
-            system("clear");
-
             login();
             break;
 
         case 3:
             printf("Saindo do programa...");
             break;
-            exit(0);
+
         default:
-            printf("Opcao invalida, tente novamente!");
+            printf("Opcao inavalida, tente novamente!");
             break;
         }
     } while (opcao != 3);
 
+   return;
 }
 
 void cadastraUsuario() {
@@ -125,22 +141,29 @@ void cadastro(int readfd, int writefd) {
     char confirmacaoSenha[MAX_PASSWORD_LEN];
     char buffer[200];
     char buff[200];
+    
+    do{
+        system("clear");
+        printf("\nInsira seu nome de usuario: ");
+        scanf("%s", novoUsuario.nomeUsuario);
 
-    printf("\nInsira seu nome de usuario: ");
-    scanf("%s", novoUsuario.nomeUsuario);
-    while ((getchar()) != '\n');
-    printf("\nInsira uma senha: ");
-    scanf("%s", novoUsuario.senha);
-    while ((getchar()) != '\n');
+        disableEcho();
 
-    printf("\nConfirme a senha digitada: ");
-    scanf("%s", confirmacaoSenha);
-    while ((getchar()) != '\n');
+        printf("\nInsira uma senha: ");
+        scanf("%s", novoUsuario.senha);
 
-    if (strcmp(novoUsuario.senha, confirmacaoSenha) != 0) {
-        printf("Erro: As senhas nao sao iguais. Tente Novamente!\n");
-        return;
-    }
+        printf("\nConfirme a senha digitada: ");
+        scanf("%s", confirmacaoSenha);
+
+        enableEcho();
+
+        if (strcmp(novoUsuario.senha, confirmacaoSenha) != 0) {
+            printf("Erro: As senhas nao sao iguais. Tente Novamente!\n");
+
+            sleep(3);
+        }
+    }while(strcmp(novoUsuario.senha, confirmacaoSenha) != 0);
+    
     snprintf(buffer, sizeof(buffer), "%s %s", novoUsuario.nomeUsuario, novoUsuario.senha);
 
     write(writefd, buffer, sizeof(buffer));
@@ -153,9 +176,8 @@ void salvaCadastro(int readfd, int writefd) {
     char buffer[200];
 
     read(readfd, buffer, sizeof(buffer));
-    printf("\nInformacao recebida -> %s\n", buffer);
 
-    FILE *arquivoUsuarios = fopen(".usuarios.txt", "a");
+    FILE *arquivoUsuarios = fopen("usuarios.txt", "a");
 
     if (arquivoUsuarios == NULL) {
         perror("Erro ao abrir o arquivo de usuarios");
@@ -208,11 +230,17 @@ void realizaLogin(int readfd, int writefd){
     char senha[MAX_PASSWORD_LEN];
     char infoLogin[50];
     char buffer[50];
+    int senhaIncorreta = 0;
 
     printf("\nUsuario: ");
     scanf("%s", usuario);
+
+    disableEcho();
+
     printf("\nSenha: ");
     scanf("%s", senha);
+
+    enableEcho();
 
     snprintf(infoLogin, sizeof(infoLogin), "%s %s", usuario, senha);
 
@@ -221,7 +249,15 @@ void realizaLogin(int readfd, int writefd){
     read(readfd, buffer, sizeof(buffer));
     printf("%s", buffer);
 
-    menuArquivo();
+    sleep(3);
+
+    if (strncmp(buffer, "\n\nLogin falhou...\nTente Novamente.", 35) == 0) {
+        senhaIncorreta = 1;
+    }
+
+    if (!senhaIncorreta) {
+        menuArquivo();
+    }
 }
 
 void leLogin(int readfd, int writefd){
@@ -229,25 +265,32 @@ void leLogin(int readfd, int writefd){
     char infoLogin[50];
     char usuario[MAX_USERNAME_LEN];
     char senha[MAX_PASSWORD_LEN];
+    char linha[200];
     int loginFeito = 0;
     
     read(readfd, infoLogin, sizeof(infoLogin));
     printf("\nConferindo as informações recebidas...");
-    printf("\n%s", infoLogin);
+    fflush(stdout);
 
     sleep(3);
 
-    FILE *arquivoUsuarios = fopen(".usuarios.txt", "r");
-    if(arquivoUsuarios == NULL){
+    FILE *arquivoUsuarios = fopen("usuarios.txt", "r");
+    if (arquivoUsuarios == NULL) {
         perror("\n\nArquivo nao encontrado");
+        return;
     }
 
     infoLogin[strcspn(infoLogin, "\n")] = '\0';
 
     sscanf(infoLogin, "%s %s", usuario, senha);
 
-    while(fscanf(arquivoUsuarios, "%s %s", usuarioAtual.nomeUsuario, usuarioAtual.senha) == 2){
-        if (strcmp(usuarioAtual.nomeUsuario, usuario) == 0 && strcmp(usuarioAtual.senha, senha) == 0) {
+
+    while (fgets(linha, sizeof(linha), arquivoUsuarios) != NULL) {
+        sscanf(linha, "%s %s", usuarioAtual.nomeUsuario, usuarioAtual.senha);
+
+        if (strcmp(usuarioAtual.nomeUsuario, usuario) == 0 && strncmp(usuarioAtual.senha, senha, sizeof(usuarioAtual.senha)) == 0) {
+            char resposta[] = "\nLogin realizado com sucesso!\n\n";
+            write(writefd, resposta, sizeof(resposta));
             loginFeito = 1;
             break;
         }
@@ -255,17 +298,12 @@ void leLogin(int readfd, int writefd){
 
     fclose(arquivoUsuarios);
 
-    if(loginFeito == 1){
-        char resposta[] = "\nLogin realizado com sucesso!\n\n";
-
-        write(writefd, resposta, sizeof(resposta));
-    }
-    else{
-        char resposta[] = "\nLogin falhou...\nTente novamente!\n\n";
-
+    if (loginFeito == 0) {
+        char resposta[] = "\n\nLogin falhou...\nTente Novamente.";
         write(writefd, resposta, sizeof(resposta));
     }
 
+    return;
 }
 
 void menuArquivo(){
@@ -294,6 +332,10 @@ void menuArquivo(){
             break;
         case 2:
             system("clear");
+            printf("Voltando a tela inicial...");
+
+            sleep(4);
+
             menuLogin();
 
             break;
@@ -303,6 +345,7 @@ void menuArquivo(){
             printf("Saindo...");
 
             exit(0);
+
             break;
         default:
             printf("Opcao invalida!\n");
@@ -363,7 +406,18 @@ void exibeArquivo(int readfd, int writefd){
 
 void leArquivo(int readfd, int writefd){
     char buff[50];
-    FILE *file = fopen(".infos.txt", "r");
+    FILE *file = fopen("infos.txt", "r");
+
+    if (file == NULL) {
+        perror("Erro ao abrir o arquivo infos.txt");
+        char mensagemErro[] = "Erro: Arquivo nao encontrado. Fechando o programa...\n";
+        write(writefd, mensagemErro, sizeof(mensagemErro));
+        exit(EXIT_FAILURE);
+    }
+
+    read(readfd, buff, sizeof(buff));
+    printf("\n%s", buff);
+    fflush(stdout);
 
     char userFile[300];
     fgets(userFile, 300, file);
@@ -371,7 +425,4 @@ void leArquivo(int readfd, int writefd){
     fclose(file);
 
     write(writefd, userFile, strlen(userFile));
-
-    read(readfd, buff, sizeof(buff));
-    printf("%s", buff);
 }

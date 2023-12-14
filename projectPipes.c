@@ -78,7 +78,7 @@ void menuLogin(){
             break;
             exit(0);
         default:
-            printf("Opcao inavalida, tente novamente!");
+            printf("Opcao invalida, tente novamente!");
             break;
         }
     } while (opcao != 3);
@@ -128,11 +128,14 @@ void cadastro(int readfd, int writefd) {
 
     printf("\nInsira seu nome de usuario: ");
     scanf("%s", novoUsuario.nomeUsuario);
+    while ((getchar()) != '\n');
     printf("\nInsira uma senha: ");
     scanf("%s", novoUsuario.senha);
+    while ((getchar()) != '\n');
 
     printf("\nConfirme a senha digitada: ");
     scanf("%s", confirmacaoSenha);
+    while ((getchar()) != '\n');
 
     if (strcmp(novoUsuario.senha, confirmacaoSenha) != 0) {
         printf("Erro: As senhas nao sao iguais. Tente Novamente!\n");
@@ -362,13 +365,13 @@ void leArquivo(int readfd, int writefd){
     char buff[50];
     FILE *file = fopen(".infos.txt", "r");
 
-    read(readfd, buff, sizeof(buff));
-    printf("%s", buff);
-
     char userFile[300];
     fgets(userFile, 300, file);
 
     fclose(file);
 
     write(writefd, userFile, strlen(userFile));
+
+    read(readfd, buff, sizeof(buff));
+    printf("%s", buff);
 }
